@@ -1,0 +1,43 @@
+package usecase
+
+import (
+	"fmt"
+	"gitlab.com/project-quiz/internal/appctx"
+	"gitlab.com/project-quiz/internal/entities"
+	"gitlab.com/project-quiz/internal/params"
+	"gitlab.com/project-quiz/internal/repository"
+
+	"github.com/jinzhu/copier"
+	log "github.com/sirupsen/logrus"
+)
+
+type <no value> struct {
+	repo repository.<no value>Repository
+	name string
+}
+
+type <no value>Usecase interface {
+	Create(param params.UserCreateParam) appctx.Response
+}
+
+func New<no value>Usecase() <no value>Usecase {
+	return &user{
+		repo: repository.New<no value>Repository(),
+		name: "<no value> Usecase",
+	}
+}
+
+func (<no value> *<no value>) Create(param params.UserCreateParam) appctx.Response {
+	log.Info(fmt.Sprintf("[%s][Create] is executed", <no value>.name))
+
+	var user entities.User
+	copier.Copy(&user, &param)
+
+	usr, err := <no value>.repo.Create(user)
+	if err != nil {
+		log.Error(fmt.Sprintf("[%s][Create] %s", <no value>.name, err.Error()))
+		return *appctx.NewResponse().WithErrors(err.Error())
+	}
+
+	return *appctx.NewResponse().WithData(usr)
+}

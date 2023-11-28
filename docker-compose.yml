@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+    networks:
+      - widya_hiring
+
+  postgresdb:
+    image: postgres:14.2-alpine
+    env_file: ./backend/.env
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=widya_hiring
+      - DATABASE_HOST=postgresdb
+    ports:
+      - '1234:5435'
+    networks:
+      - widya_hiring
+
+  api:
+    build:
+      dockerfile: Dockerfile
+      context: ./backend
+    restart: on-failure
+    env_file: ./backend/.env
+    depends_on:
+      - postgresdb
+    volumes:
+      - ./:/backend
+    ports:
+      - "5000:5000"
+    networks:
+      - widya_hiring
+    entrypoint: ["./main", "migration migrate"]
+
+networks:
+  widya_hiring:
+    external: true

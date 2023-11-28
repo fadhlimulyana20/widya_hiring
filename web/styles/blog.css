@@ -1,0 +1,33 @@
+.blog p{
+    margin-bottom: 1em;
+}
+
+.blog blockquote {
+    background-color: #c6f6d5;
+    padding: 1em;
+    margin-bottom: 1em;
+    border-radius: 10px;
+    font-size: 18px;
+    color: #19442b;
+    font-style: italic;
+}
+
+.blog h3 {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 0.25em;
+    color: #3b9a62;
+}
+
+.blog ul {
+    margin-bottom: 1em;
+    padding-inline-start: 1em;
+}
+
+.blog a {
+    color: #48bb78;
+}
+
+.blog a:hover {
+    color: #3b9a62;
+}

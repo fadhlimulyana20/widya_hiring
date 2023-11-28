@@ -1,0 +1,153 @@
+package handler
+
+import (
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"gitlab.com/project-quiz/internal/appctx"
+	"gitlab.com/project-quiz/internal/params"
+	"gitlab.com/project-quiz/internal/usecase"
+	"gitlab.com/project-quiz/utils/json"
+	"gitlab.com/project-quiz/utils/validator"
+
+	"gorm.io/gorm"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/sirupsen/logrus"
+)
+
+type user struct {
+	handler Handler
+	usecase usecase.UserUsecase
+	name    string
+}
+
+type UserHandler interface {
+	// Create a new user
+	Create(w http.ResponseWriter, r *http.Request)
+	// Get list of User
+	List(w http.ResponseWriter, r *http.Request)
+	// Update user data
+	Update(w http.ResponseWriter, r *http.Request)
+	// Get detail user data
+	Get(w http.ResponseWriter, r *http.Request)
+	// Delete user data
+	Delete(w http.ResponseWriter, r *http.Request)
+}
+
+func NewUserHandler(db *gorm.DB) UserHandler {
+	return &user{
+		usecase: usecase.NewUserUsecase(db),
+		name:    "USER HANDLER",
+	}
+}
+
+func (u *user) Create(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+	startTime := time.Now()
+
+	var param params.UserCreateParam
+	ctx := appctx.NewResponse()
+
+	if err := json.Decode(r.Body, &param); err != nil {
+		logrus.Error("Cannot decode json")
+		ctx = ctx.WithErrors(err.Error())
+	}
+
+	if err := validator.Validate(param); err != nil {
+		logrus.Error(err.Error())
+		ctx = ctx.WithErrors(err.Error()).WithCode(http.StatusBadRequest)
+	}
+
+	if len(ctx.Errors) > 0 {
+		u.handler.Response(w, *ctx, startTime, time.Now())
+		return
+	}
+
+	resp := u.usecase.Create(param)
+	u.handler.Response(w, resp, startTime, time.Now())
+}
+
+func (u *user) List(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][List] is executed", u.name))
+	startTime := time.Now()
+
+	var param params.UserListParams
+	ctx := appctx.NewResponse()
+
+	// if err := json.Decode(r.URL, &param); err != nil {
+	// 	logrus.Error("Cannot decode json")
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	if err := decoder.Decode(&param, r.URL.Query()); err != nil {
+		logrus.Error(err.Error())
+		ctx = ctx.WithErrors(err.Error())
+	}
+
+	if err := validator.Validate(param); err != nil {
+		logrus.Error(err.Error())
+		ctx = ctx.WithErrors(err.Error())
+	}
+
+	if len(ctx.Errors) > 0 {
+		u.handler.Response(w, *ctx, startTime, time.Now())
+		return
+	}
+
+	resp := u.usecase.List(param)
+	u.handler.Response(w, resp, startTime, time.Now())
+}
+
+func (u *user) Update(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Update] is executed", u.name))
+	startTime := time.Now()
+
+	var param params.UserUpdateParam
+	ctx := appctx.NewResponse()
+
+	id := chi.URLParam(r, "id")
+	param.ID, _ = strconv.Atoi(id)
+
+	if err := json.Decode(r.Body, &param); err != nil {
+		logrus.Error("Cannot decode json")
+		ctx = ctx.WithErrors(err.Error()).WithCode(http.StatusBadRequest)
+	}
+
+	if err := validator.Validate(param); err != nil {
+		logrus.Error(err.Error())
+		ctx = ctx.WithErrors(err.Error())
+	}
+
+	if len(ctx.Errors) > 0 {
+		u.handler.Response(w, *ctx, startTime, time.Now())
+		return
+	}
+
+	resp := u.usecase.Update(param)
+	u.handler.Response(w, resp, startTime, time.Now())
+}
+
+func (u *user) Get(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Get] is executed", u.name))
+	startTime := time.Now()
+
+	id := chi.URLParam(r, "id")
+	idx, _ := strconv.Atoi(id)
+
+	resp := u.usecase.Get(idx)
+	u.handler.Response(w, resp, startTime, time.Now())
+}
+
+func (u *user) Delete(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Delete] is executed", u.name))
+	startTime := time.Now()
+
+	id := chi.URLParam(r, "id")
+	idx, _ := strconv.Atoi(id)
+
+	resp := u.usecase.Delete(idx)
+	u.handler.Response(w, resp, startTime, time.Now())
+}

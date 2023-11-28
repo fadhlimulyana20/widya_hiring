@@ -1,0 +1,156 @@
+package repository
+
+import (
+	"fmt"
+
+	"gitlab.com/project-quiz/internal/entities"
+	"gitlab.com/project-quiz/internal/params"
+	"gitlab.com/project-quiz/utils/pagination/gorm_pagination"
+
+	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+)
+
+type userRepo struct {
+	db   *gorm.DB
+	name string
+}
+
+type UserRepository interface {
+	Create(entities.User) (entities.User, error)
+	Update(entities.User) (entities.User, error)
+	List([]entities.User, params.UserListParams) ([]entities.User, int, error)
+	GetTotal() (int, error)
+	Get(entities.User, int) (entities.User, error)
+	GetByEmail(string) (entities.User, error)
+	Delete(entities.User, int) (entities.User, error)
+	// Add role to user
+	AddRole(user entities.User, role entities.Role) (entities.User, error)
+	// Remove role from user
+	RemoveRole(user entities.User, role entities.Role) (entities.User, error)
+}
+
+func NewUserRepository(db *gorm.DB) UserRepository {
+	return &userRepo{
+		db:   db,
+		name: "USER REPOSITORY",
+	}
+}
+
+func (u *userRepo) Create(user entities.User) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	if err := u.db.Create(&user).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Create] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *userRepo) Get(user entities.User, ID int) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Get] is executed", u.name))
+
+	db := u.db
+
+	if err := db.Debug().Preload("Roles").First(&user, ID).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][GET] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *userRepo) GetByEmail(email string) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Get] is executed", u.name))
+
+	db := u.db
+	var user entities.User
+
+	if err := db.Debug().Where("email = ?", email).Preload("Roles").First(&user).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Get By Email] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *userRepo) List(users []entities.User, param params.UserListParams) ([]entities.User, int, error) {
+	log.Info(fmt.Sprintf("[%s][Update] is executed", u.name))
+
+	var count int64
+
+	db := u.db
+	if param.Q != "" {
+		db = db.Where("name LIKE ?", param.Q+"%").Or("email LIKE ?", param.Q+"%")
+	}
+
+	db.Debug().Select("id").Find(&users).Count(&count)
+
+	db = db.Debug().Scopes(gorm_pagination.Paginate(param.Page, param.Limit))
+
+	if err := db.Order("created_at desc").Find(&users).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][List] %s", u.name, err.Error()))
+		return users, int(count), err
+	}
+
+	return users, int(count), nil
+}
+
+func (u *userRepo) GetTotal() (int, error) {
+	log.Info(fmt.Sprintf("[%s][Get Total] is executed", u.name))
+
+	var count int64
+	var user entities.User
+
+	if err := u.db.Model(&user).Count(&count).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Get Total] %s", u.name, err.Error()))
+		return 0, err
+	}
+
+	return int(count), nil
+}
+
+func (u *userRepo) Update(user entities.User) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	if err := u.db.Model(&user).Updates(&user).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Create] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *userRepo) Delete(user entities.User, ID int) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Delete] is executed", u.name))
+
+	if err := u.db.Delete(&user, ID).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Delete] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *userRepo) AddRole(user entities.User, role entities.Role) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][AddRole] is executed", u.name))
+
+	if err := u.db.Debug().Model(&user).Association("Roles").Append(&role); err != nil {
+		log.Error(fmt.Sprintf("[%s][AddRole] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *userRepo) RemoveRole(user entities.User, role entities.Role) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][RemoveRole] is executed", u.name))
+
+	if err := u.db.Debug().Model(&user).Association("Roles").Delete(&role); err != nil {
+		log.Error(fmt.Sprintf("[%s][RemoveRole] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}

@@ -1,0 +1,3 @@
+p, admin, *, *
+p, basic, /basic*, *
+p, contributor, /contributor*, *

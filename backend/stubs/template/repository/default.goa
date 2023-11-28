@@ -1,0 +1,98 @@
+package repository
+
+import (
+	"fmt"
+	"gitlab.com/project-quiz/database"
+	"gitlab.com/project-quiz/internal/entities"
+	"gitlab.com/project-quiz/internal/params"
+	"gitlab.com/project-quiz/utils/pagination/gorm_pagination"
+
+	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
+)
+
+type <no value>Repo struct {
+	db   *gorm.DB
+	name string
+}
+
+type <no value>Repository interface {
+	Create(entities.User) (entities.User, error)
+	Update(entities.User) (entities.User, error)
+	List([]entities.User, params.UserListParams) ([]entities.User, int, error)
+	Get(entities.User, int) (entities.User, error)
+	Delete(entities.User, int) (entities.User, error)
+}
+
+func New<no value>Repository() <no value>Repository {
+	return &<no value>Repo{
+		db:   database.ORM(),
+		name: "<no value> Repository",
+	}
+}
+
+func (u *<no value>Repo) Create(user entities.User) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	if err := u.db.Create(&user).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Create] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *<no value>Repo) Get(user entities.User, ID int) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Get] is executed", u.name))
+
+	db := u.db
+
+	if err := db.Debug().First(&user, ID).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][GET] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *<no value>Repo) List(users []entities.User, param params.UserListParams) ([]entities.User, int, error) {
+	log.Info(fmt.Sprintf("[%s][Update] is executed", u.name))
+
+	var count int64
+	u.db.Find(&users).Count(&count)
+
+	db := u.db
+	if param.Q != "" {
+		db = db.Where("name LIKE ?", param.Q+"%")
+		db.Find(&users).Count(&count)
+	}
+
+	if err := db.Debug().Scopes(gorm_pagination.Paginate(param.Page, param.Limit)).Order("created_at desc").Find(&users).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][List] %s", u.name, err.Error()))
+		return users, int(count), err
+	}
+
+	return users, int(count), nil
+}
+
+func (u *<no value>Repo) Update(user entities.User) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	if err := u.db.Model(&user).Updates(&user).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Create] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (u *<no value>Repo) Delete(user entities.User, ID int) (entities.User, error) {
+	log.Info(fmt.Sprintf("[%s][Delete] is executed", u.name))
+
+	if err := u.db.Delete(&user, ID).Error; err != nil {
+		log.Error(fmt.Sprintf("[%s][Delete] %s", u.name, err.Error()))
+		return user, err
+	}
+
+	return user, nil
+}

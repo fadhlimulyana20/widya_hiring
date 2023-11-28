@@ -1,0 +1,12 @@
+# Block all crawlers for /accounts
+User-agent: *
+Disallow: /app
+Disallow: /creator
+Disallow: /Contributor
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+Sitemap: https://kuadran.co/sitemap.xml
+Sitemap: https://kuadran.co/sitemap-image.xml

@@ -1,0 +1,168 @@
+package handler
+
+import (
+	"fmt"
+	"net/http"
+	"gitlab.com/project-quiz/internal/appctx"
+	"gitlab.com/project-quiz/internal/params"
+	"gitlab.com/project-quiz/internal/usecase"
+	"gitlab.com/project-quiz/utils/json"
+	"gitlab.com/project-quiz/utils/validator"
+	"time"
+
+	"github.com/sirupsen/logrus"
+)
+
+type <no value> struct {
+	handler Handler
+	name    string
+}
+
+type <no value>Handler interface {
+	Create(w http.ResponseWriter, r *http.Request)
+    Read(w http.ResponseWriter, r *http.Request)
+    Update(w http.ResponseWriter, r *http.Request)
+    Delete(w http.ResponseWriter, r *http.Request)
+    Detail(w http.ResponseWriter, r *http.Request)
+}
+
+func New<no value>Handler() <no value>Handler {
+	return &<no value> {
+		name:    "<no value> Handler",
+	}
+}
+
+func (<no value> *<no value>) Create(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	// var param params.UserCreateParam
+	// ctx := appctx.NewResponse()
+
+	// if err := json.Decode(r.Body, &param); err != nil {
+	// 	logrus.Error("Cannot decode json")
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// if err := validator.Validate(param); err != nil {
+	// 	logrus.Error(err.Error())
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// fmt.Printf("Debug: %v", param)
+
+	// if len(ctx.Errors) > 0 {
+	// 	<no value>.handler.Response(w, *ctx, time.Now())
+	// 	return
+	// }
+
+	// resp := u.usecase.Create(param)
+	// <no value>.handler.Response(w, resp, time.Now())
+}
+
+func (<no value> *<no value>) Read(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	// var param params.UserCreateParam
+	// ctx := appctx.NewResponse()
+
+	// if err := json.Decode(r.Body, &param); err != nil {
+	// 	logrus.Error("Cannot decode json")
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// if err := validator.Validate(param); err != nil {
+	// 	logrus.Error(err.Error())
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// fmt.Printf("Debug: %v", param)
+
+	// if len(ctx.Errors) > 0 {
+	// 	<no value>.handler.Response(w, *ctx, time.Now())
+	// 	return
+	// }
+
+	// resp := u.usecase.Create(param)
+	// <no value>.handler.Response(w, resp, time.Now())
+}
+
+func (<no value> *<no value>) Update(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	// var param params.UserCreateParam
+	// ctx := appctx.NewResponse()
+
+	// if err := json.Decode(r.Body, &param); err != nil {
+	// 	logrus.Error("Cannot decode json")
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// if err := validator.Validate(param); err != nil {
+	// 	logrus.Error(err.Error())
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// fmt.Printf("Debug: %v", param)
+
+	// if len(ctx.Errors) > 0 {
+	// 	<no value>.handler.Response(w, *ctx, time.Now())
+	// 	return
+	// }
+
+	// resp := u.usecase.Create(param)
+	// <no value>.handler.Response(w, resp, time.Now())
+}
+
+func (<no value> *<no value>) Delete(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	// var param params.UserCreateParam
+	// ctx := appctx.NewResponse()
+
+	// if err := json.Decode(r.Body, &param); err != nil {
+	// 	logrus.Error("Cannot decode json")
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// if err := validator.Validate(param); err != nil {
+	// 	logrus.Error(err.Error())
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// fmt.Printf("Debug: %v", param)
+
+	// if len(ctx.Errors) > 0 {
+	// 	<no value>.handler.Response(w, *ctx, time.Now())
+	// 	return
+	// }
+
+	// resp := u.usecase.Create(param)
+	// <no value>.handler.Response(w, resp, time.Now())
+}
+
+func (<no value> *<no value>) Detail(w http.ResponseWriter, r *http.Request) {
+	logrus.Info(fmt.Sprintf("[%s][Create] is executed", u.name))
+
+	// var param params.UserCreateParam
+	// ctx := appctx.NewResponse()
+
+	// if err := json.Decode(r.Body, &param); err != nil {
+	// 	logrus.Error("Cannot decode json")
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// if err := validator.Validate(param); err != nil {
+	// 	logrus.Error(err.Error())
+	// 	ctx = ctx.WithErrors(err.Error())
+	// }
+
+	// fmt.Printf("Debug: %v", param)
+
+	// if len(ctx.Errors) > 0 {
+	// 	<no value>.handler.Response(w, *ctx, time.Now())
+	// 	return
+	// }
+
+	// resp := u.usecase.Create(param)
+	// <no value>.handler.Response(w, resp, time.Now())
+}

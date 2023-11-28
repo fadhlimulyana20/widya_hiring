@@ -1,0 +1,139 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  TAG_LATEST: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:latest
+  TAG_COMMIT: $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_NAME:$CI_COMMIT_SHORT_SHA
+
+publish:
+  # Use the official docker image.
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  # Default branch leaves tag empty (= latest tag)
+  # All other branches are tagged with the escaped branch name (commit ref slug)
+  script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "main" ]]; then
+        tag=""
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+      else
+        tag=":$CI_COMMIT_REF_SLUG"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+    - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}" .
+    - docker push "$CI_REGISTRY_IMAGE${tag}"
+  # Run this job in a branch where a Dockerfile exists
+  # tags:
+  #   - build
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      exists:
+        - Dockerfile
+
+publish-dev:
+  # Use the official docker image.
+  image: docker:latest
+  stage: build
+  services:
+    - docker:dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  # Default branch leaves tag empty (= latest tag)
+  # All other branches are tagged with the escaped branch name (commit ref slug)
+  script:
+    - |
+      if [[ "$CI_COMMIT_BRANCH" == "main" ]]; then
+        tag=""
+        echo "Running on default branch '$CI_DEFAULT_BRANCH': tag = 'latest'"
+      else
+        tag=":dev"
+        echo "Running on branch '$CI_COMMIT_BRANCH': tag = $tag"
+      fi
+    - docker build --pull -t "$CI_REGISTRY_IMAGE${tag}" .
+    - docker push "$CI_REGISTRY_IMAGE${tag}"
+  # Run this job in a branch where a Dockerfile exists
+  # tags:
+  #   - build
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "development"
+      exists:
+        - Dockerfile
+
+
+# migration:
+#   image: docker:24.0.2-alpine3.18
+#   stage: deploy
+#   services:
+#     - docker:dind
+#   before_script:
+#     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+#   script:
+#     - docker pull $CI_REGISTRY_IMAGE:latest
+#     - wget --no-check-certificate $ENV_PROD_LINK -O .env
+#     - docker run -i --env-file .env --name my-app $CI_REGISTRY_IMAGE:latest ./main migration migrate
+#   when: manual
+#   only:
+#     - main
+
+migration:
+  image: alpine:latest
+  stage: deploy
+  # tags:
+  #   - deployment
+  only:
+    - main
+  environment:
+    name: production
+    url: http://$SERVER_PROD_IP
+  when: manual
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apk add --update openssh openssh-client )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PROD_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER_PROD_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && rm -f .env"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && wget --no-check-certificate '$ENV_PROD_LINK' -O .env"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "docker pull $CI_REGISTRY_IMAGE:latest"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && docker run -i --env-file .env --name kuad-migration $CI_REGISTRY_IMAGE:latest ./main migration migrate"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "docker container rm kuad-migration"
+
+deploy:
+  image: alpine:latest
+  stage: deploy
+  # tags:
+  #   - deployment
+  only:
+    - main
+  environment:
+    name: production
+    url: http://$SERVER_PROD_IP
+  when: manual
+  before_script:
+    - 'command -v ssh-agent >/dev/null || ( apk add --update openssh openssh-client )'
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PROD_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan $SERVER_PROD_IP >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && rm -f .env docker-compose.yml"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && wget --no-check-certificate '$ENV_PROD_LINK' -O .env"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && wget --no-check-certificate '$COMPOSE_PROD_FILE_LINK' -O docker-compose.yml"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "docker pull $CI_REGISTRY_IMAGE:latest"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && docker compose down"
+    - ssh $SERVER_PROD_USER@$SERVER_PROD_IP "cd backend && docker compose up -d"
+
